@@ -45,7 +45,7 @@ while read hostlist; do
 done <$list
 
 for port in $(echo $secureports | tr "," " "); do
- echo "/ip firewall filter set [ :ip firewall filter find dst-port=$port ] src-address-list=admin" >> $file
+ echo "/ip firewall filter set [ :ip firewall filter find dst-port=\"$port\" ] src-address-list=admin" >> $file
 done
 
 echo ":if ([:system package find name=ipv6 disabled=yes] = \"\") do={
@@ -70,7 +70,7 @@ while read hostlist; do
 done <$list
 
 for port in $(echo $secureports | tr "," " "); do
- echo " /ipv6 firewall filter set [ :ipv6 firewall filter find dst-port=$port ] src-address-list=admin" >> $file
+ echo " /ipv6 firewall filter set [ :ipv6 firewall filter find dst-port=\"$port\" ] src-address-list=admin" >> $file
 done
 
 echo '}' >> $file
