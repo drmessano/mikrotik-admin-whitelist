@@ -31,7 +31,7 @@ if [ $dudeserver ]; then
  if [ $ipv4addr ]; then
   echo "/ip firewall address-list remove [find list=admin !address=$ipv4addr]
 :if ([:ip firewall address-list find list=admin address=$ipv4addr] = \"\") do={
- ip firewall address-list add list=admin address=$ipv4addr}" >> $file
+ :ip firewall address-list add list=admin address=$ipv4addr}" >> $file
  else  
   echo '/ip firewall address-list remove [find list=admin]' >> $file
  fi
@@ -56,7 +56,7 @@ if [ $dudeserver ]; then
  if [ $ipv6addr ]; then
   echo " /ipv6 firewall address-list remove [find list=admin !address=$ipv6addr]
  :if ([:ipv6 firewall address-list find list=admin address=$ipv6addr] = \"\") do={
- ipv6 firewall address-list add list=admin address=$ipv6addr}" >> $file
+ :ipv6 firewall address-list add list=admin address=$ipv6addr}" >> $file
  else
   echo ' /ipv6 firewall address-list remove [find list=admin]' >> $file
  fi
