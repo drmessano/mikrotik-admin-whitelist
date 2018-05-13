@@ -23,7 +23,7 @@
  :if ([:ipv6 firewall address-list find list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335] = "") do={
   :ipv6 firewall address-list add list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335 comment=dude timeout=1d} else={
    :if ([:ipv6 firewall address-list find list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335] != "") do={
-    :ipv6 firewall address-list set list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335 timeout=1d}}
+    :ipv6 firewall address-list set [:ipv6 firewall address-list find list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335] timeout=1d}}
  /do {ipv6 firewall address-list add list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7334} on-error={}
  /do {ipv6 firewall address-list add list=admin address=2001:db8:1a:3000::/60} on-error={}
  /ipv6 firewall filter set [:ipv6 firewall filter find dst-port="22"] src-address-list=admin
