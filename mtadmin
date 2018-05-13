@@ -3,7 +3,7 @@ now=$(date)
 file=/var/www/html/admin.rsc
 list=/etc/mtadmin.lst
 secureports=22,80,443,8291
-dudeserver=dude.example.com
+dudeservers=dude.example.com,dude2.example.com
 
 function ip4address () {
  if [[ $1 =~ ^([0-9]{1,2}|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(/([0-9]|[1-2][0-9]|3[0-2]))?$ ]]; then
@@ -26,15 +26,19 @@ echo "# Generated on $now
 /system logging disable 0
 /ip firewall address-list" > $file
 
-if [ $dudeserver ]; then
- ip4address $dudeserver
- if [ $ipv4addr ]; then
-  echo "/ip firewall address-list remove [find list=admin !address=$ipv4addr]
-:if ([:ip firewall address-list find list=admin address=$ipv4addr] = \"\") do={
- :ip firewall address-list add list=admin address=$ipv4addr}" >> $file
- else  
-  echo '/ip firewall address-list remove [find list=admin]' >> $file
- fi
+if [ $dudeservers ]; then
+echo "/ip firewall address-list remove [find list=admin comment!=dude]" >> $file
+ for server in $(echo $dudeservers | tr "," " "); do
+  ip4address $server
+  if [ $ipv4addr ]; then
+   echo ":if ([:ip firewall address-list find list=admin address=$ipv4addr] = \"\") do={
+ :ip firewall address-list add list=admin address=$ipv4addr comment=dude timeout=1d} else={
+  :if ([:ip firewall address-list find list=admin address=$ipv4addr] != \"\") do={
+   :ip firewall address-list set [:ip firewall address-list find list=admin address=$ipv4addr] timeout=1d}}" >> $file
+  else  
+   echo '/ip firewall address-list remove [find list=admin]' >> $file
+  fi
+ done
 fi
 
 while read hostlist; do
@@ -45,21 +49,25 @@ while read hostlist; do
 done <$list
 
 for port in $(echo $secureports | tr "," " "); do
- echo "/ip firewall filter set [ :ip firewall filter find dst-port=\"$port\" ] src-address-list=admin" >> $file
+ echo "/ip firewall filter set [:ip firewall filter find dst-port=\"$port\"] src-address-list=admin" >> $file
 done
 
 echo ":if ([:system package find name=ipv6 disabled=yes] = \"\") do={
  /ipv6 firewall address-list" >> $file
 
-if [ $dudeserver ]; then
- ip6address $dudeserver
- if [ $ipv6addr ]; then
-  echo " /ipv6 firewall address-list remove [find list=admin !address=$ipv6addr]
- :if ([:ipv6 firewall address-list find list=admin address=$ipv6addr] = \"\") do={
- :ipv6 firewall address-list add list=admin address=$ipv6addr}" >> $file
- else
-  echo ' /ipv6 firewall address-list remove [find list=admin]' >> $file
- fi
+if [ $dudeservers ]; then
+ echo " /ipv6 firewall address-list remove [find list=admin comment!=dude]" >> $file
+ for server in $(echo $dudeservers | tr "," " "); do
+  ip6address $server
+  if [ $ipv6addr ]; then
+   echo " :if ([:ipv6 firewall address-list find list=admin address=$ipv6addr] = \"\") do={
+  :ipv6 firewall address-list add list=admin address=$ipv6addr comment=dude timeout=1d} else={
+   :if ([:ipv6 firewall address-list find list=admin address=$ipv6addr] != \"\") do={
+    :ipv6 firewall address-list set list=admin address=$ipv6addr timeout=1d}}" >> $file
+  else
+   echo ' /ipv6 firewall address-list remove [find list=admin]' >> $file
+  fi
+ done
 fi
 
 while read hostlist; do
@@ -70,7 +78,7 @@ while read hostlist; do
 done <$list
 
 for port in $(echo $secureports | tr "," " "); do
- echo " /ipv6 firewall filter set [ :ipv6 firewall filter find dst-port=\"$port\" ] src-address-list=admin" >> $file
+ echo " /ipv6 firewall filter set [:ipv6 firewall filter find dst-port=\"$port\"] src-address-list=admin" >> $file
 done
 
 echo '}' >> $file
