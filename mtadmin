@@ -63,7 +63,7 @@ if [ $dudeservers ]; then
    echo " :if ([:ipv6 firewall address-list find list=admin address=$ipv6addr] = \"\") do={
   :ipv6 firewall address-list add list=admin address=$ipv6addr comment=dude timeout=1d} else={
    :if ([:ipv6 firewall address-list find list=admin address=$ipv6addr] != \"\") do={
-    :ipv6 firewall address-list set list=admin address=$ipv6addr timeout=1d}}" >> $file
+    :ipv6 firewall address-list set [:ipv6 firewall address-list find list=admin address=$ipv6addr] timeout=1d}}" >> $file
   else
    echo ' /ipv6 firewall address-list remove [find list=admin]' >> $file
   fi
