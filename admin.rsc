@@ -8,10 +8,10 @@
 :if ([:ip firewall address-list find list=admin address=1.1.1.2] = "") do={
  :ip firewall address-list add list=admin address=1.1.1.2 comment=dude timeout=1d} else={
   :if ([:ip firewall address-list find list=admin address=1.1.1.2] != "") do={
-   :ip firewall address-list set [:ip firewall address-list find list=admin address=1.1.1.2] timeout=1d}}
+   :ip firewall address-list set [:ip firewall address-list find list=admin address=1.1.1.2] timeout=1d}} on-error={}
 /ip firewall address-list remove [find list=admin]
-/do {ip firewall address-list add list=admin address=1.1.1.1} on-error={}
-/do {ip firewall address-list add list=admin address=1.1.1.0/29} on-error={}
+/do {ip firewall address-list add list=admin address=1.1.1.1 timeout=4h} on-error={}
+/do {ip firewall address-list add list=admin address=1.1.1.0/29 timeout=4h} on-error={}
 /ip firewall filter set [:ip firewall filter find dst-port="22"] src-address-list=admin
 /ip firewall filter set [:ip firewall filter find dst-port="80"] src-address-list=admin
 /ip firewall filter set [:ip firewall filter find dst-port="443"] src-address-list=admin
@@ -23,9 +23,9 @@
  :if ([:ipv6 firewall address-list find list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335] = "") do={
   :ipv6 firewall address-list add list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335 comment=dude timeout=1d} else={
    :if ([:ipv6 firewall address-list find list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335] != "") do={
-    :ipv6 firewall address-list set [:ipv6 firewall address-list find list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335] timeout=1d}}
- /do {ipv6 firewall address-list add list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7334} on-error={}
- /do {ipv6 firewall address-list add list=admin address=2001:db8:1a:3000::/60} on-error={}
+    :ipv6 firewall address-list set [:ipv6 firewall address-list find list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7335] timeout=1d}} on-error={}
+ /do {ipv6 firewall address-list add list=admin address=2001:0db8:85a3:0000:0000:8a2e:0370:7334 timeout=4h} on-error={}
+ /do {ipv6 firewall address-list add list=admin address=2001:db8:1a:3000::/60 timeout=4h} on-error={}
  /ipv6 firewall filter set [:ipv6 firewall filter find dst-port="22"] src-address-list=admin
  /ipv6 firewall filter set [:ipv6 firewall filter find dst-port="80"] src-address-list=admin
  /ipv6 firewall filter set [:ipv6 firewall filter find dst-port="443"] src-address-list=admin
