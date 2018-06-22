@@ -1,11 +1,35 @@
 #!/bin/bash
-now=$(date)
-file=/var/www/html/admin.rsc
+
+# Sets the output path and filename of the generated .rsc script.
+outpath=/var/www/html
+outfile=admin.rsc
+
+# Sets the filename for the host/ip list.
 list=/etc/mtadmin.lst
+
+# Sets the address list timeout for the hosts in the host/ip list.
+hosttimeout=4h
+
+# List of secure ports, comma-separated.  If firewall rules matching these ports are found when the script 
+# is run, src-address-list=admin will be applied to those rules.
 secureports=22,80,443,8291
+
+# List of Dude Servers, comma-separated.  These hosts will not be deleted/reloaded when the script is run
+# but will be checked and the timeout reset when run.  This prevents Dude Server dropouts during script reload.
+# Hosts removed from this list will timeout when dudetimeout is reached.
 dudeservers=dude.example.com,dude2.example.com
 dudetimeout=24h
-hosttimeout=4h
+
+# Sets up the scheduler for fetching the .rsc script.  The scripthost should be the path to the script on the host
+# server. The scheduler will fetch scripthost/outfile (specified above).
+scripthost=https://www.example.com
+schedname="adminwhitelist update"
+schedtime=5m
+
+# Enable/Disable the Failsafe Script (optional). This removes src-address-list from port 22 after a set timeout,
+# should the script fail to fetch/run from the host server. Timeout is reset to failtime every script fetch/run.
+failsafe=false
+failtime=72h
 
 function ip4address () {
  if [[ $1 =~ ^([0-9]{1,2}|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(/([0-9]|[1-2][0-9]|3[0-2]))?$ ]]; then 
@@ -18,29 +42,35 @@ function ip6address () {
 }
 
 function dudetimeout () {
- if [ $dudetimeout ]; then echo " timeout=$dudetimeout"; else echo ""; fi
+ if [ $dudetimeout ]; then printf ' timeout='"$dudetimeout"''; else printf ''; fi
 }
 
 function hosttimeout () {
- if [ $hosttimeout ]; then echo " timeout=$hosttimeout"; else echo ""; fi
+ if [ $hosttimeout ]; then printf ' timeout='"$hosttimeout"''; else printf ''; fi
 }
 
-echo "# Generated on $now
+function mtdate () { printf "$(TZ=EST5EDT date '+%b/%d/%Y')"; }
+
+function mttime () { printf "$(TZ=EST5EDT date '+%H:%M:%S')"; }
+
+script=$outpath/$outfile
+
+printf '# Generated on '"$(date)"'
 :log info \"Importing Admin Address List\"
 /system logging disable 0
-/ip firewall address-list" > $file
+/ip firewall address-list\n' > $script
 
 if [ $dudeservers ]; then
-echo "/ip firewall address-list remove [find list=admin comment!=dude]" >> $file
- for server in $(echo $dudeservers | tr "," " "); do
+printf '/ip firewall address-list remove [find list=admin comment!=dude]\n' >> $script
+ for server in $(printf $dudeservers | tr "," " "); do
   ip4address $server
   if [ $ipv4addr ]; then
-   echo ":if ([:ip firewall address-list find list=admin address=$ipv4addr] = \"\") do={
- :ip firewall address-list add list=admin address=$ipv4addr comment=dude"$(dudetimeout)"} else={
-  :if ([:ip firewall address-list find list=admin address=$ipv4addr] != \"\") do={
-   :ip firewall address-list set [:ip firewall address-list find list=admin address=$ipv4addr]"$(dudetimeout)"}} on-error={}" >> $file
+   printf ':if ([:ip firewall address-list find list=admin address='"$ipv4addr"'] = \"\") do={
+ :ip firewall address-list add list=admin address='"$ipv4addr"' comment=dude'"$(dudetimeout)"'} else={
+  :if ([:ip firewall address-list find list=admin address='"$ipv4addr"'] != \"\") do={
+   :ip firewall address-list set [:ip firewall address-list find list=admin address='"$ipv4addr"']'"$(dudetimeout)"'}}\n' >> $script
   else  
-   echo '/ip firewall address-list remove [find list=admin]' >> $file
+   printf '/ip firewall address-list remove [find list=admin]' >> $script
   fi
  done
 fi
@@ -48,28 +78,28 @@ fi
 while read hostlist; do
   ip4address $hostlist
   if [ $ipv4addr ]; then
-  echo "/do {ip firewall address-list add list=admin address=$ipv4addr"$(hosttimeout)"} on-error={}" >> $file
+   printf '/do {ip firewall address-list add list=admin address='"$ipv4addr$(hosttimeout)"'} on-error={}\n' >> $script
   fi
 done <$list
 
 for port in $(echo $secureports | tr "," " "); do
- echo "/ip firewall filter set [:ip firewall filter find dst-port=\"$port\"] src-address-list=admin on-error={}" >> $file
+ printf '/do {ip firewall filter set [:ip firewall filter find dst-port=\"'"$port"'\"] src-address-list=admin} on-error={}\n' >> $script
 done
 
-echo ":if ([:system package find name=ipv6 disabled=yes] = \"\") do={
- /ipv6 firewall address-list" >> $file
+printf ':if ([:system package find name=ipv6 disabled=yes] = \"\") do={
+ /ipv6 firewall address-list\n' >> $script
 
 if [ $dudeservers ]; then
- echo " /ipv6 firewall address-list remove [find list=admin comment!=dude]" >> $file
- for server in $(echo $dudeservers | tr "," " "); do
+ printf ' /ipv6 firewall address-list remove [find list=admin comment!=dude]\n' >> $script
+ for server in $(printf $dudeservers | tr "," " "); do
   ip6address $server
   if [ $ipv6addr ]; then
-   echo " :if ([:ipv6 firewall address-list find list=admin address=$ipv6addr] = \"\") do={
-  :ipv6 firewall address-list add list=admin address=$ipv6addr comment=dude"$(dudetimeout)"} else={
-   :if ([:ipv6 firewall address-list find list=admin address=$ipv6addr] != \"\") do={
-    :ipv6 firewall address-list set [:ipv6 firewall address-list find list=admin address=$ipv6addr]"$(dudetimeout)"}} on-error={}" >> $file
+   printf ' :if ([:ipv6 firewall address-list find list=admin address='"$ipv6addr"'] = \"\") do={
+  :ipv6 firewall address-list add list=admin address='"$ipv6addr"' comment=dude'"$(dudetimeout)"'} else={
+   :if ([:ipv6 firewall address-list find list=admin address='"$ipv6addr"'] != \"\") do={
+    :ipv6 firewall address-list set [:ipv6 firewall address-list find list=admin address='"$ipv6addr"']'"$(dudetimeout)"'}}\n' >> $script
   else
-   echo ' /ipv6 firewall address-list remove [find list=admin]' >> $file
+   printf ' /ipv6 firewall address-list remove [find list=admin]' >> $script
   fi
  done
 fi
@@ -77,16 +107,32 @@ fi
 while read hostlist; do
  ip6address $hostlist
  if [ $ipv6addr ]; then
-  echo " /do {ipv6 firewall address-list add list=admin address=$ipv6addr"$(hosttimeout)"} on-error={}" >> $file
+  printf ' /do {ipv6 firewall address-list add list=admin address='"$ipv6addr$(hosttimeout)"'} on-error={}\n' >> $script
  fi
 done <$list
 
-for port in $(echo $secureports | tr "," " "); do
- echo " /ipv6 firewall filter set [:ipv6 firewall filter find dst-port=\"$port\"] src-address-list=admin on-error={}" >> $file
+for port in $(printf $secureports | tr "," " "); do
+ printf ' /do {ipv6 firewall filter set [:ipv6 firewall filter find dst-port=\"'"$port"'\"] src-address-list=admin} on-error={}\n' >> $script
 done
 
-echo '}' >> $file
+printf '}\n' >> $script
 
-echo '/system logging enable 0
+printf '/system logging enable 0
 :log info "Admin Address List Import Complete"
-' >> $file
+' >> $script
+
+printf ':if ([:system scheduler find name=\"'"$schedname"'\"] = \"\") do={
+ :system scheduler add interval='"$schedtime"' name=\"'"$schedname"'\" on-event=\"/tool fetch \\
+  '"$scripthost/$outfile"'\\
+  \\n/import '"$outfile"'\" policy=read,write,test start-time=startup}\n' >> $script
+
+if [ $failsafe == true ]; then
+ printf ':if ([:system scheduler find name=\"whitelist failsafe\"] = \"\") do={
+ :system scheduler add interval='"$failtime"' name=\"whitelist failsafe\" on-event=\"\\
+  /ip firewall filter set [:ip firewall filter find dst-port=\\\"22\\\"] src-address-list=\\\"\\\"
+  :if ([:system package find name=ipv6 disabled=yes] = \\\"\\\") do={
+   /ipv6 firewall filter set [:ipv6 firewall filter find dst-port=\\\"22\\\"] src-address-list=\\\"\\\"}"} else={
+:if ([:system scheduler find name=\"whitelist failsafe\"] != "") do={
+ :system scheduler set [:system scheduler find name name=\"whitelist failsafe\"] interval='"$failtime"'\\
+  start-date='"$(mtdate)"' start-time='"$(mttime)"'}}\n' >> $script
+fi
