@@ -133,6 +133,6 @@ if [ $failsafe == true ]; then
   :if ([:system package find name=ipv6 disabled=yes] = \\\"\\\") do={
    /ipv6 firewall filter set [:ipv6 firewall filter find dst-port=\\\"22\\\"] src-address-list=\\\"\\\"}"} else={
 :if ([:system scheduler find name=\"whitelist failsafe\"] != "") do={
- :system scheduler set [:system scheduler find name name=\"whitelist failsafe\"] interval='"$failtime"'\\
+ :system scheduler set [:system scheduler find name=\"whitelist failsafe\"] interval='"$failtime"'\\
   start-date='"$(mtdate)"' start-time='"$(mttime)"'}}\n' >> $script
 fi
