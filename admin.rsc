@@ -38,8 +38,8 @@
 :if ([:system scheduler find name="whitelist failsafe"] = "") do={
  :system scheduler add interval=72h name="whitelist failsafe" on-event="\
   do {:ip firewall address-list add list=admin address=0.0.0.0/0}
- :if ([:system package find name=ipv6 disabled=yes] = \"\") do={
-  :ipv6 firewall address-list add list=admin address=::/0}"} else={
+  :if ([:system package find name=ipv6 disabled=yes] = \"\") do={
+   :ipv6 firewall address-list add list=admin address=::/0}"} else={
 :if ([:system scheduler find name="whitelist failsafe"] != "") do={
  :system scheduler set [:system scheduler find name="whitelist failsafe"] interval=72h\
   start-date=Jun/01/2019 start-time=00:00:00}}
