@@ -129,9 +129,9 @@ printf ':if ([:system scheduler find name=\"'"$schedname"'\"] = \"\") do={
 if [ $failsafe == true ]; then
  printf ':if ([:system scheduler find name=\"whitelist failsafe\"] = \"\") do={
  :system scheduler add interval='"$failtime"' name=\"whitelist failsafe\" on-event=\"\\
-  do {:ip firewall address-list add list=admin address=0.0.0.0/0} on-error={}
+  do {:ip firewall address-list add list=admin address=0.0.0.0/0}
 :if ([:system package find name=ipv6 disabled=yes] = \\\"\\\") do={
- :ipv6 firewall address-list add list=admin address=::/0} on-error={}"} else={
+ :ipv6 firewall address-list add list=admin address=::/0}"} else={
 :if ([:system scheduler find name=\"whitelist failsafe\"] != "") do={
  :system scheduler set [:system scheduler find name=\"whitelist failsafe\"] interval='"$failtime"'\\
   start-date='"$(mtdate)"' start-time='"$(mttime)"'}}\n' >> $script
