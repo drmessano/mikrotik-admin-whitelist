@@ -37,9 +37,9 @@
   \n/import admin.rsc" policy=read,write,test start-time=startup}
 :if ([:system scheduler find name="whitelist failsafe"] = "") do={
  :system scheduler add interval=72h name="whitelist failsafe" on-event="\
-  /ip firewall filter set [:ip firewall filter find dst-port=\"22\"] src-address-list=\"\"
-  :if ([:system package find name=ipv6 disabled=yes] = \"\") do={
-   /ipv6 firewall filter set [:ipv6 firewall filter find dst-port=\"22\"] src-address-list=\"\"}"} else={
+  do {:ip firewall address-list add list=admin address=0.0.0.0/0}
+ :if ([:system package find name=ipv6 disabled=yes] = \"\") do={
+  :ipv6 firewall address-list add list=admin address=::/0}"} else={
 :if ([:system scheduler find name="whitelist failsafe"] != "") do={
- :system scheduler set [:system scheduler find name name="whitelist failsafe"] interval=72h\
+ :system scheduler set [:system scheduler find name="whitelist failsafe"] interval=72h\
   start-date=Jun/01/2019 start-time=00:00:00}}
