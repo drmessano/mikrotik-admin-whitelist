@@ -11,12 +11,29 @@ Make the script executable and run.  Script will generate the file you specify b
 
 **Automation:**
 
-It is recommended that you run the script with a cron job:
+It is recommended that you run the script with systemd timers:
 
 ```
-# Mikrotik Admin Whitelist Script
+printf '[Unit]
+Description=Mikrotik Admin Whitelist Creator
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/mtadmin
+[Install]
+WantedBy=multi-user.target
+' | sudo tee /etc/systemd/system/mtadmin.service
 
-*/5 * * * * root /usr/local/bin/mtadmin
+printf '[Unit]
+Description=Mikrotik Admin Whitelist Scheduler
+[Timer]
+OnCalendar=*:0/5
+Unit=mtadmin.service
+[Install]
+WantedBy=multi-user.target
+' | sudo tee /etc/systemd/system/mtadmin.timer
+
+systemctl enable mtadmin.timer
+systemctl start mtadmin.timer
 ```
 
 On each client device, use the scheduler to automatically download and import the whitelist as needed:
