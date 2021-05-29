@@ -29,7 +29,7 @@ schedtime=5m
 # Enable/Disable the Failsafe Script (optional). This removes src-address-list from port 22 after a set timeout,
 # should the script fail to fetch/run from the host server. Timeout is reset to failtime every script fetch/run.
 failsafe=false
-failtime=72h
+failtime=24h
 
 function ip4address () {
  if [[ $1 =~ ^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)((\/([8-9]|[1-2][0-9]|3[1-2]))?)$ ]]; then
